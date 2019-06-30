@@ -9,6 +9,7 @@
 #include <set>
 #include <cmath>
 #include <cassert>
+#include <memory>
 using namespace std;
 
 #define DEBUG
@@ -59,10 +60,17 @@ public:
     RANGE_ASSERT(x, y);
     cells_[y][x] = c;
   }
+  void fillCellsEmpty() {
+    memset(empty_height_, 0, sizeof(empty_height_));
+    memset(cells_, BLOCK::EMPTY, sizeof(cells_));
+  }
   /**
    * colorA, colorBのBlockを落とす
    * 高さが足りず置けない場合は，falseを返す．
    * rotateとxの組が間違っている場合も，falseを返す
+   * 
+   * rotate 0: 右には置けない
+   * rotate 2: 左には置けない
    */
   bool putBlock(int x, Color colorA, Color colorB, int rotate) {
     assert(x >= 0 && x < BOARD_WIDTH);
@@ -123,14 +131,14 @@ public:
 #ifdef DEBUG_BOARD
     for (int y = BOARD_HEIGHT - 1; y >= 0; y--) {
       for (int x = 0; x < BOARD_WIDTH; x++) {
-        cout << at(x, y) << endl;
+        cout << at(x, y);
       }
+      cout << endl;
     }
 #endif
   }
   Board() {
-    memset(cells_, 0, sizeof(cells_));
-    memset(empty_height_, 0, sizeof(empty_height_));
+    fillCellsEmpty();
   }
 };
 
@@ -154,12 +162,13 @@ private:
     while(!qy.empty()) {
       int x = qx.front(); qx.pop();
       int y = qy.front(); qy.pop();
-      deleted_y.push_back(y);
       deleted_x.push_back(x);
-      for(int k = 0; k < 4; k++) {
-        int ny = y + dy[k], nx = x + dx[k];
-        if(board->isOut(x, y))continue;
-        if(board->at(nx, ny) != board->at(x, y) || searched[ny][nx])continue;
+      deleted_y.push_back(y);
+      for(int d = 0; d < 4; d++) {
+        int nx = x + dx[d];
+        int ny = y + dy[d];
+        if(board->isOut(nx, ny)) continue;
+        if(board->at(nx, ny) != board->at(x, y) || searched[ny][nx]) continue;
         qx.push(nx);
         qy.push(ny);
         searched[ny][nx] = 1;
@@ -174,7 +183,7 @@ private:
     bool isCombo = false;
     int searched[BOARD_HEIGHT][BOARD_WIDTH];
     memset(searched, 0, sizeof(searched));
-    for (int y = 0; y < BOARD_HEIGHT; y++) for (int x = 0; x < BOARD_HEIGHT; x++) {
+    for (int y = 0; y < BOARD_HEIGHT; y++) for (int x = 0; x < BOARD_WIDTH; x++) {
       if(board->at(x, y) != BLOCK::SKULL && board->at(x, y) != BLOCK::EMPTY
           && searched[y][x] == 0) {
         vector<int> deleted_x, deleted_y;
@@ -183,6 +192,8 @@ private:
 
         // 4連結以上であれば消す
         if(deleted_count >= 4) {
+          DEBUG_PRINTF("deleted_count: %d at (%2d, %2d)\n", deleted_count, x, y);
+          
           isCombo = true;
           Color deleted_color = board->at(deleted_x[0], deleted_y[0]);
           assert(deleted_color >= '1' && deleted_color <= '5');
@@ -198,7 +209,7 @@ private:
               if (board->isOut(nx, ny)) continue;
               if (board->at(nx, ny) == BLOCK::SKULL) board->set(nx, ny, BLOCK::EMPTY);
             }
-            board->set(x, y, BLOCK::EMPTY);
+            board->set(deleted_x[i], deleted_y[i], BLOCK::EMPTY);
           }
         }
       }
@@ -212,11 +223,14 @@ public:
    */
   double getScoreByCombo(Board* board) {
     double score = 0.0;
+    int combo_count = 0;
     B = CP = CB = GB = 0;
     memset(deleted_colors, 0, sizeof(deleted_colors));
     // Group Bonus and B(# of deleted blocks)
     bool firstCombo = true;
+    DEBUG_PRINTF("combo count: %d\n", combo_count++);
     while(deleteConnectedColorBlocks(board)) {
+      DEBUG_PRINTF("combo count: %d\n", combo_count++);
       // 詰める
       board->pack();
       
@@ -242,8 +256,51 @@ public:
   }
 };
 
-int main(void) {
+void test_Board_put() {
+  unique_ptr<Board> board(new Board());
+  unique_ptr<ComboUtility> combo_util(new ComboUtility());
 
+  cout << "test 1" << endl;
+  cout << board->putSkullLine() << endl;
+  board->debugPrint();
+  cout << endl;
+
+  cout << "test 2" << endl;
+  cout << board->putBlock(0, BLOCK::RED, BLOCK::RED, 0) << endl;
+  board->debugPrint();
+  cout << endl;
+
+  cout << "test 3" << endl;
+  cout << board->putBlock(BOARD_WIDTH - 1, BLOCK::RED, BLOCK::RED, 0) << endl;
+  board->debugPrint();
+  cout << endl;
+
+
+  cout << "test 4" << endl;
+  cout << board->putBlock(BOARD_WIDTH - 1, BLOCK::RED, BLOCK::RED, 0) << endl;
+  cout << board->putBlock(0, BLOCK::RED, BLOCK::RED, 2) << endl;
+  cout << endl;
+
+  cout << "test 5" << endl;
+  board->fillCellsEmpty();
+  board->debugPrint();
+  cout << board->putBlock(0, BLOCK::RED, BLOCK::RED, 1) << endl;
+  cout << board->putBlock(1, BLOCK::RED, BLOCK::RED, 1) << endl;
+  cout << board->putBlock(1, BLOCK::RED, BLOCK::YELLOW, 1) << endl;
+  cout << board->putBlock(2, BLOCK::YELLOW, BLOCK::YELLOW, 1) << endl;
+  cout << board->putBlock(2, BLOCK::YELLOW, BLOCK::BLUE, 1) << endl;
+  cout << board->putBlock(3, BLOCK::BLUE, BLOCK::BLUE, 1) << endl;
+  cout << board->putBlock(3, BLOCK::BLUE, BLOCK::PINK, 1) << endl;
+  cout << board->putBlock(4, BLOCK::PINK, BLOCK::PINK, 1) << endl;
+  cout << board->putBlock(4, BLOCK::PINK, BLOCK::GREEN, 1) << endl;
+  board->debugPrint();
+  cout << combo_util->getScoreByCombo(board.get()) << endl;
+  board->debugPrint();
+  cout << endl;
+}
+
+int main(void) {
+  test_Board_put();
 
   return 0;
 }
