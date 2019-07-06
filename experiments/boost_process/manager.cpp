@@ -30,26 +30,38 @@ void test_pipe() {
 
 void test_pipe_2() {
   // https://www.boost.org/doc/libs/1_70_0/doc/html/process.html
-  bp::ipstream from_sum_out;
-  bp::opstream to_sum_out;
-  bp::child c("sum.out", bp::std_in < to_sum_out, bp::std_out > from_sum_out);
+  bp::ipstream from_sum_out_1;
+  bp::opstream to_sum_out_1;
+
+  bp::ipstream from_sum_out_2;
+  bp::opstream to_sum_out_2;
+  bp::child c1("sum.out", bp::std_in < to_sum_out_1, bp::std_out > from_sum_out_1);
+  bp::child c2("sum.out", bp::std_in < to_sum_out_2, bp::std_out > from_sum_out_2);
 
   std::string line;
 
   for (int j = 0; j < 100; j++) {
     int n = 10;
-    to_sum_out << n << endl;
+    to_sum_out_1 << n << endl;
+    to_sum_out_2 << n << endl;
     for (int i = 1; i <= n; i++) {
-      to_sum_out << i << endl;
+      to_sum_out_1 << i << endl;
+      to_sum_out_2 << (i + 1) * i << endl;
     }
 
-    if (from_sum_out) {
-      std::getline(from_sum_out, line);
+    if (from_sum_out_1) {
+      std::getline(from_sum_out_1, line);
+      std::cerr << line << std::endl;
+    }
+
+    if (from_sum_out_2) {
+      std::getline(from_sum_out_2, line);
       std::cerr << line << std::endl;
     }
   }
 
-  c.terminate();
+  c1.terminate();
+  c2.terminate();
 }
 
 int main(void) {
