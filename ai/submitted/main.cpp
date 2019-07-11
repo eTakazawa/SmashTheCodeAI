@@ -437,20 +437,20 @@ void solve(vector<string> board,int turn) {
     }
   }
   
-  if(nowStatesQue[MaxTurn].empty())cout << 0 << " " << 0 << " !? " << endl;
+  if(nowStatesQue[MaxTurn].empty())cerr << 0 << " " << 0 << " !? " << endl;
   else{
     State* bestState = nowStatesQue[MaxTurn].top();
-    cout << bestState->firstColumn << " " << bestState->firstRotate << " ";
+    cout << bestState->firstColumn << " " << bestState->firstRotate << endl;
     // if(bestState->turn - turn > 1)cout << "About " << bestState->turn - turn - 1 << " turns left." << endl;
     // else if(bestState->getValue() == 0)cout << "Help!!!" << endl;
     // else cout << "Fire!!" << endl;
-    cout << turn+1 << "/" << bestState->turn << "/";
-    cout << (int)bestState->getValue() << "/";
+    // cerr << turn+1 << "/" << bestState->turn << "/";
+    // cerr << (int)bestState->getValue() << "/";
     
-    cout << (int)bestState->nuisancePoints*70 << endl;
-    cerr << "hakka:" << bestState->hakkaHeight << endl;
+    // cerr << (int)bestState->nuisancePoints*70 << endl;
+    // cerr << "hakka:" << bestState->hakkaHeight << endl;
     auto msec = timer.getDuration();
-    cerr << msec << " ms" << endl;    
+    // cerr << msec << " ms" << endl;    
   }
 }
 
@@ -463,6 +463,7 @@ int main()
   while (1) {
     vector<int> colorCounter(6);
     vector<string> myBoard(12,"......"),opBoard(12);
+    // cerr << turn << " input start!" << endl;
     if(turn == 0){
       for (int i = 0; i < 8; i++) {
         cin >> colorAs[i] >> colorBs[i];
@@ -491,6 +492,7 @@ cin >> tsc;
       cin >> opBoard[i];
       cin.ignore();
     }
+    // cerr << turn << " input end!" << endl;
      
     opPinchi = false;
     int mhtmp = 0;
@@ -510,7 +512,7 @@ cin >> tsc;
   
     // Write an action using cout. DON'T FORGET THE "<< endl"
     // To debug: cerr << "Debug messages..." << endl;
-    cerr << "turn: "<< turn << endl;
+    // cerr << "turn: "<< turn << endl;
     solve(myBoard, turn);
     turn++;
     // exit(0);
