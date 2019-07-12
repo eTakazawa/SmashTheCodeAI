@@ -446,6 +446,12 @@ public:
     fill(curr_scores_.begin(), curr_scores_.end(), 0);
   }
 
+  bool isEndGame() {
+    int count_alives = countAlives();
+    if (count_alives <= 1) return true;
+    return false;
+  }
+
   bool isAllDead() {
     for (int i = 0; i < NUM_PLAYERS; i++) {
       if (!deads_[i]) return false;
@@ -468,6 +474,30 @@ private:
     return colors[dice(mt)];
   }
 };
+
+void random_vs_submitted() {
+  GameManager gm;
+  bp::ipstream from_ai_1, from_ai_2;
+  bp::opstream to_ai_1, to_ai_2;
+  bp::child ai1("../ai/random/a.out", bp::std_in < to_ai_1, bp::std_out > from_ai_1);
+  bp::child ai2("../ai/submitted/a.out", bp::std_in < to_ai_2, bp::std_out > from_ai_2, bp::std_err > bp::null);
+  vector<bp::ipstream*> is;
+  vector<bp::opstream*> os;
+  is.push_back(&from_ai_1);is.push_back(&from_ai_2);
+  os.push_back(&to_ai_1);os.push_back(&to_ai_2);
+
+  for (int i = 0; i < 100; i++) {
+    cerr << "phase: " << i << endl;
+    gm.communicateAndSimulateAllPlayerTurn(is, os);
+    gm.boards_[1]->debugPrint();
+    gm.toNextTurn();
+
+    if (gm.isEndGame()) break;
+  }
+
+  ai1.terminate();
+  ai2.terminate();
+}
 
 void test_codingame() {
   GameManager gm;
@@ -562,6 +592,7 @@ void test_Board_put() {
 int main(void) {
   // test_game_manager_npstream();
   // test_game_manager_iostream();
-  test_codingame();
+  // test_codingame();
+  // random_vs_submitted();
   return 0;
 }
