@@ -34,6 +34,7 @@ constexpr static int BOARD_WIDTH = 6;
 constexpr static int BOARD_HEIGHT = 12;
 constexpr static int NUM_ROTATION = 4;
 constexpr static int NUM_NEXTS = 8;
+constexpr static int END_TURN = 200;
 
 constexpr static double NUISANCE_PER_SCORE = 70.0;
 
