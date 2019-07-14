@@ -1,14 +1,16 @@
 #include <iostream>
+#include <random>
+#include "../../game/const.hpp"
+
 using namespace std;
 
-const static int BOARD_WIDTH = 6;
-const static int BOARD_HEIGHT = 12;
-const static int NUM_ROTATION = 4;
-const static int NUM_NEXTS = 8;
-const static int NUM_PLAYERS = 2;
+int mt_rand() {
+  static random_device rd;
+  static mt19937 mt(rd());
+  return mt();
+}
 
 int main(void) {
-  srand(time(NULL));
   for (;;) {
     string tmp;
     // 8先まで
@@ -23,11 +25,11 @@ int main(void) {
         cin >> tmp;
       }
     }
-    int x = rand() % BOARD_WIDTH;
-    int rotate = rand() % NUM_ROTATION;
+    int x = mt_rand() % BOARD_WIDTH;
+    int rotate = mt_rand() % NUM_ROTATION;
     while ((x == 0 && rotate == 2) || (x == BOARD_WIDTH - 1 && rotate == 0)) {
-      x = rand() % BOARD_WIDTH;
-      rotate = rand() % NUM_ROTATION;
+      x = mt_rand() % BOARD_WIDTH;
+      rotate = mt_rand() % NUM_ROTATION;
     }
     cout << x << " " << rotate << endl;
   }
