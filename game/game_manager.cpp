@@ -287,6 +287,7 @@ public:
   }
 };
 
+// @todo 通信部分が混ざっているので分離したい
 class GameManager {
 public:
   const static int NUM_PLAYERS = 2;
@@ -396,12 +397,12 @@ public:
     for (int player_id = 0; player_id < NUM_PLAYERS; player_id++) {
       if (deads_[player_id]) continue; // 死んでたら飛ばす
       // player_idのAIへ盤面情報を出力・返答待ち
-      curr_actions[player_id] = communicateToAIOneTurn(from_ais[player_id], to_ais[player_id], player_id);
+      curr_actions[player_id] = communicateToAITurn(from_ais[player_id], to_ais[player_id], player_id);
     }
     return curr_actions;
   }
   template<class T1, class T2>
-  Action communicateToAIOneTurn(T1* from_ai_p, T2* to_ai_p, int ai_player_id) {
+  Action communicateToAITurn(T1* from_ai_p, T2* to_ai_p, int ai_player_id) {
     DEBUG_PRINTF("communicate to player_id: %d\n", ai_player_id);
 
     T1 &from_ai = *from_ai_p;
