@@ -475,7 +475,7 @@ private:
   }
 };
 
-void random_vs_submitted() {
+static void random_vs_submitted() {
   GameManager gm;
   bp::ipstream from_ai_1, from_ai_2;
   bp::opstream to_ai_1, to_ai_2;
@@ -499,7 +499,7 @@ void random_vs_submitted() {
   ai2.terminate();
 }
 
-void test_codingame() {
+static void test_codingame() {
   GameManager gm;
   gm.setStatusFromStdin(0);
 
@@ -510,7 +510,7 @@ void test_codingame() {
   gm.boards_[0]->debugPrint();
 }
 
-void test_game_manager_npstream() {
+static void test_game_manager_npstream() {
   GameManager gm;
   bp::ipstream from_ai_1, from_ai_2;
   bp::opstream to_ai_1, to_ai_2;
@@ -533,7 +533,7 @@ void test_game_manager_npstream() {
   ai2.terminate();
 }
 
-void test_game_manager_iostream() {
+static void test_game_manager_iostream() {
   GameManager gm;
   vector<istream*> is;
   vector<ostream*> os;
@@ -546,7 +546,7 @@ void test_game_manager_iostream() {
   }
 }
 
-void test_Board_put() {
+static void test_Board_put() {
   unique_ptr<Board> board(new Board());
   unique_ptr<ComboUtility> combo_util(new ComboUtility());
 
@@ -589,10 +589,10 @@ void test_Board_put() {
   cout << endl;
 }
 
-int main(void) {
+static void test(void) {
   // test_game_manager_npstream();
   // test_game_manager_iostream();
   // test_codingame();
   // random_vs_submitted();
-  return 0;
+  return;
 }
