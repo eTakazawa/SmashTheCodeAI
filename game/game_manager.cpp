@@ -20,47 +20,7 @@ using namespace std;
 #define DEBUG
 #define DEBUG_BOARD
 
-#ifdef DEBUG
-#define DEBUG_PRINTF(fmt, ...)  printf(fmt, __VA_ARGS__);                   
-#else
-#define DEBUG_PRINTF(fmt, ...)
-#endif
-
-#define RANGE_ASSERT(x, y) assert(x >= 0 && x < BOARD_WIDTH && y >= 0 && y < BOARD_HEIGHT)
-
-const static int BOARD_WIDTH = 6;
-const static int BOARD_HEIGHT = 12;
-const static int NUM_ROTATION = 4;
-const static int NUM_NEXTS = 8;
-const static int NUM_COLORS = 5;
-const static double NUISANCE_PER_SCORE = 70.0;
-
-const static int colorA_dx[] = {0, 0, 0, 0};
-const static int colorA_dy[] = {0, 0, 0, 1};
-const static int colorB_dx[] = {1, 0, -1, 0};
-const static int colorB_dy[] = {0, 1, 0, 0};
-
-const static int dx[] = {0, 1, 0, -1};
-const static int dy[] = {1, 0, -1, 0};
-
-enum BLOCK {
-  SKULL = '0',
-  BLUE = '1',
-  GREEN = '2',
-  PINK = '3',
-  RED = '4',
-  YELLOW = '5',
-  EMPTY = '.',
-};
-
-typedef char Color;
-const static Color colors[NUM_COLORS] = {
-  BLOCK::BLUE,
-  BLOCK::GREEN,
-  BLOCK::PINK,
-  BLOCK::RED,
-  BLOCK::YELLOW
-};
+#include "const.hpp"
 
 class Board {
 private:
@@ -290,7 +250,6 @@ public:
 // @todo 通信部分が混ざっているので分離したい
 class GameManager {
 public:
-  const static int NUM_PLAYERS = 2;
   unique_ptr<Board> boards_[NUM_PLAYERS];
   unique_ptr<ComboUtility> combo_util_;
   Color nexts_colors_[NUM_NEXTS][2];
@@ -471,11 +430,12 @@ private:
   Color getRandomColor() {
     static random_device rd;
     static mt19937 mt(rd());
-    static uniform_int_distribution<int> dice(0, NUM_COLORS - 1);
-    return colors[dice(mt)];
+    static uniform_int_distribution<int> dice(0, BLOCK::NUM_COLORS - 1);
+    return BLOCK::COLORS[dice(mt)];
   }
 };
 
+#ifdef TEST_GAME_MANAGER
 static void random_vs_submitted() {
   GameManager gm;
   bp::ipstream from_ai_1, from_ai_2;
@@ -597,3 +557,9 @@ static void test(void) {
   // random_vs_submitted();
   return;
 }
+
+int main(void) {
+  test();
+  return 0;
+}
+#endif
