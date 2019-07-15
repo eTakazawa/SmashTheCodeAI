@@ -17,7 +17,7 @@
 namespace bp = boost::process;
 using namespace std;
 
-#define DEBUG
+// #define DEBUG
 #define DEBUG_BOARD
 
 #include "const.hpp"
@@ -273,6 +273,7 @@ public:
                  deads_(NUM_PLAYERS), last_actions_(NUM_PLAYERS), nuisance_points_(NUM_PLAYERS) {
     for (int i = 0; i < NUM_PLAYERS; i++) {
       boards_[i] = make_unique<Board>();
+      last_actions_[i] = Action(-1, -1);
     }
     combo_util_ = make_unique<ComboUtility>();
     for (int i = 0; i < NUM_NEXTS; i++) {
@@ -371,7 +372,7 @@ public:
     }
   }
   /**
-   * 盤面等の情報を出力（codingameの入力形式）
+   * player_idに送る盤面等の情報を出力（codingameの入力形式）
    */
   template<class T2>
   void outputState(T2& to_ai, int ai_player_id) {
@@ -396,6 +397,7 @@ public:
    */
   template<class T2>
   void outputLastAction(T2& out, int player_id) {
+    assert(last_actions_[0].first != -1);
     Action& act = last_actions_[player_id];
     out << act.first << " " << act.second << endl;
   }
@@ -465,15 +467,15 @@ public:
   }
   enum GAME_STATE {
     DOING = -1,
-    DRAW = 0,
-    AI_0_WIN = 1,
-    AI_1_WIN = 2
+    AI_0_WIN = 0,
+    AI_1_WIN = 1,
+    DRAW = NUM_PLAYERS
   };
   int getGameState() {
     if (!isEndGame()) return DOING;
     if (countAlives() == NUM_PLAYERS) return DRAW;
     for (int i = 0; i < NUM_PLAYERS; i++) {
-      if (!deads_[i]) return (i + 1);
+      if (!deads_[i]) return i; // GAME_STATE::AI_N_WIN
     }
     assert(0);
   }
