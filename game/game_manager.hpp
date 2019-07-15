@@ -256,6 +256,8 @@ public:
  */
 class GameManager {
 public:
+  typedef pair<int,int> Action;
+
   unique_ptr<Board> boards_[NUM_PLAYERS];
   unique_ptr<ComboUtility> combo_util_;
   Color nexts_colors_[NUM_NEXTS][2];
@@ -263,12 +265,12 @@ public:
   vector<int> scores_;
   vector<int> curr_scores_;
   vector<int> deads_;
+  vector<Action> last_actions_;
   vector<double> nuisance_points_;
   int turn_;
-
-  typedef pair<int,int> Action;
   
-  GameManager(): scores_(NUM_PLAYERS), curr_scores_(NUM_PLAYERS), deads_(NUM_PLAYERS), nuisance_points_(NUM_PLAYERS) {
+  GameManager(): scores_(NUM_PLAYERS), curr_scores_(NUM_PLAYERS),
+                 deads_(NUM_PLAYERS), last_actions_(NUM_PLAYERS), nuisance_points_(NUM_PLAYERS) {
     for (int i = 0; i < NUM_PLAYERS; i++) {
       boards_[i] = make_unique<Board>();
     }
@@ -280,32 +282,18 @@ public:
     turn_ = 0;
   }
 
-  void setStatusFromStdin(int ai_player_id) {
-    // 8先まで
-    for (int i = 0; i < NUM_NEXTS; i++) {
-      cin >> nexts_colors_[i][0] >> nexts_colors_[i][1];
-    }
-    // 各プレイヤーの盤面情報（最初が自分）
-    for (int player_id_offset = 0; player_id_offset < NUM_PLAYERS; player_id_offset++) {
-      int player_id = (ai_player_id + player_id_offset) % NUM_PLAYERS;
-      cin >> scores_[player_id];
-      for (int y = BOARD_HEIGHT - 1; y >= 0; y--) {
-        string tmp;
-        cin >> tmp;
-        for (int x = 0; x < BOARD_WIDTH; x++) {
-          boards_[player_id]->set(x, y, tmp[x]);
-        }
-      }
-      boards_[player_id]->resetEmptyHeight();
-    }
+  vector<Action> getLastActions() {
+    return last_actions_;
   }
 
   /**
    * player_idの1ターン分のシミュレーション
+   * last_actions_[player_id]を更新する
    * (生きているか，スコア)を返す
    */
   pair<bool, int> simulatePlayerTurn(int player_id, int x, int rotate, int num_skull_line) {
     assert(player_id >= 0 && player_id < NUM_PLAYERS);
+    last_actions_[player_id] = Action(x, rotate);
 
     // 現在のplayerの変数をとっておく
     Board *board = boards_[player_id].get();
@@ -358,12 +346,35 @@ public:
   }
 
   /**
+   * IO関係
+   */
+  /**
+   * 標準入力から盤面等の情報の受け取り（condingame形式）@todo cinに限らず，ifsで良さそう
+   */
+  void setStatusFromStdin(int ai_player_id) {
+    // 8先まで
+    for (int i = 0; i < NUM_NEXTS; i++) {
+      cin >> nexts_colors_[i][0] >> nexts_colors_[i][1];
+    }
+    // 各プレイヤーの盤面情報（最初が自分）
+    for (int player_id_offset = 0; player_id_offset < NUM_PLAYERS; player_id_offset++) {
+      int player_id = (ai_player_id + player_id_offset) % NUM_PLAYERS;
+      cin >> scores_[player_id];
+      for (int y = BOARD_HEIGHT - 1; y >= 0; y--) {
+        string tmp;
+        cin >> tmp;
+        for (int x = 0; x < BOARD_WIDTH; x++) {
+          boards_[player_id]->set(x, y, tmp[x]);
+        }
+      }
+      boards_[player_id]->resetEmptyHeight();
+    }
+  }
+  /**
    * 盤面等の情報を出力（codingameの入力形式）
    */
   template<class T2>
-  void outputState(T2* to_ai_p, int ai_player_id) {
-    T2 &to_ai = *to_ai_p;
-
+  void outputState(T2& to_ai, int ai_player_id) {
     // 8先まで
     for (int i = 0; i < NUM_NEXTS; i++) {
       to_ai << nexts_colors_[i][0] << " " << nexts_colors_[i][1] << endl;
@@ -380,7 +391,14 @@ public:
       }
     }
   }
-
+  /**
+   * 直前にした行動の出力（0ターン目はエラー）
+   */
+  template<class T2>
+  void outputLastAction(T2& out, int player_id) {
+    Action& act = last_actions_[player_id];
+    out << act.first << " " << act.second << endl;
+  }
   /**
    * ai_player_id番目のプレイヤーに
    * to_aisに盤面等の状態を入力として与え，
@@ -394,7 +412,7 @@ public:
     T1 &from_ai = *from_ai_p;
     T2 &to_ai = *to_ai_p;
 
-    outputState(to_ai_p, ai_player_id);
+    outputState(to_ai, ai_player_id);
     // AIからの入力待ち
     int from_ai_x, from_ai_rotate;
     // @todo ここで時間計測
@@ -497,7 +515,14 @@ static void random_vs_submitted() {
   for (int i = 0; i < 100; i++) {
     cerr << "phase: " << i << endl;
     gm.communicateAndSimulateAllPlayerTurn(is, os);
+    cerr << "player 0" << endl;
+    gm.boards_[0]->debugPrint();
+    gm.outputLastAction(cerr, 0);
+    cerr << endl;
+    cerr << "player 1" << endl;
     gm.boards_[1]->debugPrint();
+    gm.outputLastAction(cerr, 1);
+    cerr << endl;
     gm.toNextTurn();
 
     if (gm.isEndGame()) break;
@@ -601,7 +626,7 @@ static void test(void) {
   // test_game_manager_npstream();
   // test_game_manager_iostream();
   // test_codingame();
-  // random_vs_submitted();
+  random_vs_submitted();
   return;
 }
 #endif
