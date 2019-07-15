@@ -7,7 +7,8 @@ using namespace std;
 int mt_rand() {
   static random_device rd;
   static mt19937 mt(rd());
-  return mt();
+  static uniform_int_distribution<int> r(0, 65535);
+  return r(mt);
 }
 
 int main(void) {
