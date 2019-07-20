@@ -473,7 +473,8 @@ public:
   };
   int getGameState() {
     if (!isEndGame()) return DOING;
-    if (countAlives() == NUM_PLAYERS) return DRAW;
+    int count_alives = countAlives();
+    if (count_alives == NUM_PLAYERS || count_alives == 0) return DRAW;
     for (int i = 0; i < NUM_PLAYERS; i++) {
       if (!deads_[i]) return i; // GAME_STATE::AI_N_WIN
     }
