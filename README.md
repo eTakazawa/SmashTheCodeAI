@@ -16,6 +16,14 @@
 
 - [x] 定数をどこかにまとめる
   - [ ] クラスごとに必要な定数を分離（テンプレートが良い？）
+- [ ] パイプ閉じる
+```
+terminate called after throwing an instance of 'boost::process::process_error'
+  what():  pipe(2) failed: Too many open files
+Abort trap: 6
+```
+
+- [ ] 対戦AIのタイムアウト設定（止まらない時がある）
 
 ## Refacter
 - [ ] パイプ通信をutilにする
