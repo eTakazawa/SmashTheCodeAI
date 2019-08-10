@@ -67,8 +67,8 @@ void battle(vector<string>& commands, string log_root_path) {
 
   // プロセスを落とす
   for (int pid = 0; pid < NUM_PLAYERS; pid++) {
-    ai_processes[pid].terminate();
     ofs[pid].close();
+    ai_processes[pid].terminate();
   }
   result.close();
 }
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
   if (argc < 4) {
     cerr << "usage: auto_game.out log_root_path command0 command1 ";
     cerr << "[num_battle<=999999]" << endl << endl;
-    cerr << "(e.g.) ./a.out ../log/`date '+%Y_%m_%d-%H_%M_%S'`/ ../ai/random/a.out ../ai/random/a.out 5" << endl;
+    cerr << "(e.g.) ./auto_game.out ../log/`date '+%Y_%m_%d-%H_%M_%S'`/ ../ai/submitted/a.out ../ai/random/a.out 1000" << endl;
     exit(1);
   }
 
