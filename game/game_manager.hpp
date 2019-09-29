@@ -15,7 +15,7 @@
 #include <boost/process.hpp>
 
 namespace bp = boost::process;
-using namespace std;
+using namespace std; // @todo headerでnamespaceはやめる，実装と定義を分離
 
 // #define DEBUG
 #define DEBUG_BOARD
