@@ -429,7 +429,7 @@ def run_train(net, optimizer, dataset, save_dir, gpu_id):
           results_valid['accuracy'].append(acc_valid.array)
           break
 
-  # 各epochのモデルの保存
+  # モデルの保存
   save_filename = os.path.join(save_dir, 'net_final.npz')
   save_model(net, gpu_id, save_filename)
   print('save model to {} at {}\n'.format(count, save_filename))
