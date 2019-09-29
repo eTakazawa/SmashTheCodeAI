@@ -1,6 +1,7 @@
 import os.path
 import sys
 import re
+import argparse
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -342,10 +343,7 @@ def concat_samples(train_batch, gpu_id):
 
 #   pass
 
-GPU_ID = 0
-def run_train(net, optimizer, dataset, save_path):
-  gpu_id = GPU_ID # 使用するGPU番号
-  
+def run_train(net, optimizer, dataset, save_dir, gpu_id):
   n_batch = 64
   n_epoch = 10
 
@@ -366,7 +364,9 @@ def run_train(net, optimizer, dataset, save_path):
   # iteration数出力
   print('# of epoch:', n_epoch)
   print('# of batch:', n_batch)
-  print('# of iteration:', max(n_epoch, n_epoch * len(train) / n_batch), '\n')
+  print('# of train:', len(train))
+  print('# of valid:', len(valid))
+  print('# of iteration:', int(max(n_epoch, n_epoch * len(train) / n_batch)), '\n')
 
   # ぷよぷよAIを参考にbatch_sizeは64
   train_iter = SerialIterator(train, batch_size=n_batch, repeat=True, shuffle=True)
@@ -397,8 +397,8 @@ def run_train(net, optimizer, dataset, save_path):
       # 1000 iterationごとにモデルを保存
       if count % SAVE_MODEL_PER_ITER == 0:
         # 各epochのモデルの保存
-        save_filename = os.path.join(save_path, 'net_{:03d}.npz'.format(count))
-        save_model(net, save_filename)
+        save_filename = os.path.join(save_dir, 'net_{:03d}.npz'.format(count))
+        save_model(net, gpu_id, save_filename)
         print('save model (iteration {}) to {}\n'.format(count, save_filename))
 
       # 1エポック終えたら、valid データで評価する
@@ -430,28 +430,28 @@ def run_train(net, optimizer, dataset, save_path):
           break
 
   # 各epochのモデルの保存
-  save_filename = os.path.join(save_path, 'net_final.npz')
-  save_model(net, save_filename)
-  print('save model to {}\n'.format(count, save_filename))
+  save_filename = os.path.join(save_dir, 'net_final.npz')
+  save_model(net, gpu_id, save_filename)
+  print('save model to {} at {}\n'.format(count, save_filename))
 
   # 損失 (loss)
   plt.plot(results_train['loss'], label='train')  # label で凡例の設定
   plt.plot(results_valid['loss'], label='valid')  # label で凡例の設定
   plt.legend()  # 凡例の表示
-  plt.savefig(os.path.join(save_path, 'loss.png'))
+  plt.savefig(os.path.join(save_dir, 'loss.png'))
   plt.figure()
   # 精度 (accuracy)
   plt.plot(results_train['accuracy'], label='train')  # label で凡例の設定
   plt.plot(results_valid['accuracy'], label='valid')  # label で凡例の設定
   plt.legend()  # 凡例の表示
-  plt.savefig(os.path.join(save_path, 'accuracy.png'))
+  plt.savefig(os.path.join(save_dir, 'accuracy.png'))
 
-def save_model(net, filename='net.npz'):
-  if GPU_ID:
+def save_model(net, gpu_id, filename='net.npz'):
+  if gpu_id is not None:
     net.to_cpu()
   serializers.save_npz(filename, net)
 
-def main(log_dir, gpu_id, file_npz, save_path):
+def main(log_dir, gpu_id, file_npz, save_dir):
   # log_dir以下のファイルを読み込む
   print('*** [START] load files in {} ***'.format(log_dir), file=sys.stderr)
   log_contents = load_smash_the_code_log(log_dir)
@@ -480,23 +480,18 @@ def main(log_dir, gpu_id, file_npz, save_path):
 
   # 学習
   print('*** [START] training ***', file=sys.stderr)
-  run_train(net, optimizer, dataset, save_path)
+  run_train(net, optimizer, dataset, save_dir, gpu_id)
   print('*** [ END ] training ***', file=sys.stderr)
 
 if __name__ == "__main__":
-  argc = len(sys.argv)
-  file_npz = None
-  save_path = None
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--log_dir", help="input to ml algorithm (log_dir/%%06d/*.txt)", type=str, required=True)
+  parser.add_argument("--save_dir", help="save models and result's images in save_dir", type=str, required=True)
+  parser.add_argument("--net_npz", help="load model's npz file if (default not use)", default=None)
+  parser.add_argument("--gpu_id", help="gpu id (defalut not use gpu)", default=None)
+  args = parser.parse_args()
 
-  if argc < 2:
-    print("usage: python supervised_learning.py log_root_dir [save_path] [net.npz]")
-  if argc >= 3:
-    save_path = sys.argv[2]
-  if argc >= 4:
-    if sys.argv[3] is not "None":
-      file_npz = sys.argv[3]
-  if argc > 5:
-    print("too many arg")
-    exit(0)
+  if not os.path.exists(args.save_dir):
+    os.makedirs(args.save_dir)
 
-  main(sys.argv[1], None, file_npz, save_path)
+  main(args.log_dir, args.gpu_id, args.net_npz, args.save_dir)
