@@ -11,7 +11,7 @@ void battle(vector<string>& commands, string log_root_path) {
   vector<bp::child> ai_processes(NUM_PLAYERS);
   vector<bp::ipstream> from_ai_pstreams(NUM_PLAYERS);
   vector<bp::opstream> to_ai_pstreams(NUM_PLAYERS);
-  // 受け渡し用にアドレスで渡す
+  // 受け渡し用にアドレスで渡す（@todo 生のアドレスで渡すのは避けたい）
   vector<bp::ipstream*> p_froms(NUM_PLAYERS);
   vector<bp::opstream*> p_tos(NUM_PLAYERS);
   // 各プレイヤーの起動・設定
@@ -65,10 +65,12 @@ void battle(vector<string>& commands, string log_root_path) {
     result << commands[i] << endl;
   }
 
-  // プロセスを落とす
+  // プロセスを落とす pipeをclose
   for (int pid = 0; pid < NUM_PLAYERS; pid++) {
     ofs[pid].close();
     ai_processes[pid].terminate();
+    from_ai_pstreams[pid].pipe().close();
+    to_ai_pstreams[pid].pipe().close();
   }
   result.close();
 }
