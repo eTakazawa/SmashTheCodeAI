@@ -223,7 +223,7 @@ def concat_samples(train_batch, gpu_id):
 
 def run_train(net, optimizer, dataset, save_dir, gpu_id):
   n_batch = 64
-  n_epoch = 10
+  n_epoch = 50
 
   SAVE_MODEL_PER_ITER = 1000
 
