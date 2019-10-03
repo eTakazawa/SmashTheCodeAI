@@ -328,6 +328,8 @@ def save_model(net, gpu_id, filename='net.npz'):
   if gpu_id is not None:
     net.to_cpu()
   serializers.save_npz(filename, net)
+  if gpu_id is not None:
+    net.to_gpu(gpu_id)
 
 def main(log_dir, gpu_id, file_npz, save_dir):
   # log_dir以下のファイルを読み込む
@@ -368,7 +370,7 @@ if __name__ == "__main__":
   parser.add_argument("--log_dir", help="input to ml algorithm (log_dir/%%06d/*.txt)", type=str, required=True)
   parser.add_argument("--save_dir", help="save models and result's images in save_dir", type=str, required=True)
   parser.add_argument("--net_npz", help="load model's npz file if (default not use)", default=None)
-  parser.add_argument("--gpu_id", help="gpu id (defalut not use gpu)", default=None)
+  parser.add_argument("--gpu_id", help="gpu id (defalut not use gpu)", default=None, type=int)
   args = parser.parse_args()
 
   if not os.path.exists(args.save_dir):
