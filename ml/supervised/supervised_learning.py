@@ -18,6 +18,7 @@ from chainer import serializers
 
 from game_const import *
 from smash_the_code_net import SmashTheCodeNet
+from smash_the_code_net_mini import SmashTheCodeMiniNet
 
 def get_aciont_tbl():
   action_id = 0
@@ -344,7 +345,9 @@ def main(log_dir, gpu_id, file_npz, save_dir):
 
   # ネットワーク定義
   print('*** [START] define neural network ***', file=sys.stderr)
-  net = SmashTheCodeNet()
+  # net = SmashTheCodeNet()
+  net = SmashTheCodeMiniNet()
+  
   if file_npz:
     serializers.load_npz(file_npz, net)
 
