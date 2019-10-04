@@ -49,16 +49,16 @@ class SmashTheCodeMiniNet(chainer.Chain):
     # 全結合層のノード数
     ## 盤面
     n_board_flatten_in = BOARD_HEIGHT * BOARD_WIDTH * n_board_mid
-    n_board_fc0_out = 256
+    n_board_fc0_out = n_board_flatten_in
     n_board_fc1_out = n_board_fc0_out // 2
     ## ネクスト
     n_nexts_flatten_in = NUM_NEXTS * NEXT_SIZE * n_nexts_mid
-    n_nexts_fc0_out = 128
+    n_nexts_fc0_out = n_nexts_flatten_in
     n_nexts_fc1_out = n_nexts_fc0_out // 2
     ## concated
     n_all_fc0_in = n_board_fc1_out + n_nexts_fc1_out
-    n_all_fc0_out = 256
-    n_all_fc1_out = 128
+    n_all_fc0_out = 512
+    n_all_fc1_out = 256
 
     with self.init_scope():
       # 盤面入力：(B,H,W,C)=(None,12,6,6) (H×W=12×6, 5色+SKULL)
