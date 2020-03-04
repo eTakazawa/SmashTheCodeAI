@@ -40,15 +40,42 @@ class SmashTheCodeNetTrainer():
     self.criterion = nn.CrossEntropyLoss()
     self.optimizer = optim.SGD(self.net.parameters(), lr=0.001, momentum=0.9)
   
+  def valid(self, valid_loader):
+    self.net.eval()
+    running_loss = 0
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+      for i, batch_data in enumerate(valid_loader, 0):
+        x0set, x1set, labels = batch_data
+        
+        outputs = self.net(x0set, x1set)
+
+        loss = self.criterion(outputs, labels)
+        running_loss += loss.item()
+
+        _, predicted = torch.max(outputs, 1)
+        correct += (predicted == labels).sum().item()
+        total += labels.size(0)
+    val_loss = running_loss / len(valid_loader)
+    val_acc = float(correct) / total
+    
+    return val_loss, val_acc
+
+
   def run(self, num_epoch, batch_size, dataset, random_state=0):
     # split train/test
-    train_dataset, _ = train_test_split(dataset, test_size=0.2, random_state=random_state)
+    train_dataset, valid_dataset = train_test_split(dataset, test_size=0.2, random_state=random_state)
     train_dataset = create_tensor_dataset(train_dataset)
+    valid_dataset = create_tensor_dataset(valid_dataset)
+
     # Mini-Batch loader
     data_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=True)
 
     for epoch in range(num_epoch):  # loop over the dataset multiple times
-      running_loss = 0.0
+      self.net.train()
       for i, batch_data in enumerate(data_loader, 0):
         x0set, x1set, labels = batch_data
 
@@ -63,18 +90,20 @@ class SmashTheCodeNetTrainer():
         self.optimizer.step()
 
         # print statistics
-        running_loss += loss.item()
-        if i % 2000 == 1999:    # print every 2000 mini-batches
-          print('[%d, %5d] loss: %.3f' % (epoch + 1, i + 1, running_loss / 2000))
-          running_loss = 0.0
+        loss += loss.item()
+        print('[%d, %5d] loss: %.3f' % (epoch + 1, i + 1, loss))
+      
+      val_loss, val_acc = self.valid(valid_loader)
+      print('val_loss: {}, val_acc: {}'.format(val_loss, val_acc))
+      
 
 def main(np_dataset_path):
   dataset = np.load(np_dataset_path)
   trainer = SmashTheCodeNetTrainer()
 
-  dataset = dataset[:1000]
+  dataset = dataset[:int(640 / 0.8)]
   print('len(dataset): {}'.format(len(dataset)))
-  trainer.run(100, 10, dataset)
+  trainer.run(10, 64, dataset)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
