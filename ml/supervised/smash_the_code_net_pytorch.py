@@ -1,8 +1,13 @@
+import sys
+import pathlib
+
+parent_dir = str(pathlib.Path(__file__).parent.parent.resolve())
+sys.path.append(parent_dir)
+from game_const import *
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
-from game_const import *
 
 # conv kernel_size=3x3，padding=stride=1
 def conv3x3(in_channels, out_channels, stride=1, groups=1, dilation=1):
