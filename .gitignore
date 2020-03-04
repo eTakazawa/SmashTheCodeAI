@@ -1,4 +1,9 @@
 *.out
 .vscode
+**/__pycache__/**
 log/*
 log
+result/*
+data/*
+data
+*.pem
