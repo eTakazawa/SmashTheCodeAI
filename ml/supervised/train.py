@@ -35,10 +35,18 @@ def create_tensor_dataset(dataset):
   return TensorDataset(x0, x1, t)
 
 class SmashTheCodeNetTrainer():
-  def __init__(self):
-    self.net = SmashTheCodeNetTorch()
+  def __init__(self, load_model_path=""):
+    self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    if load_model_path != "":
+      self.net = SmashTheCodeNetTorch()
+      self.net.load_state_dict(torch.load(load_model_path))
+    else:
+      self.net = SmashTheCodeNetTorch()
+    self.net.to(self.device)
+
     self.criterion = nn.CrossEntropyLoss()
     self.optimizer = optim.SGD(self.net.parameters(), lr=0.001, momentum=0.9)
+    # If cuda is available, use it
   
   def valid(self, valid_loader):
     self.net.eval()
@@ -49,6 +57,11 @@ class SmashTheCodeNetTrainer():
     with torch.no_grad():
       for i, batch_data in enumerate(valid_loader, 0):
         x0set, x1set, labels = batch_data
+        
+        # Convert for cuda
+        x0set = x0set.to(self.device)
+        x1set = x1set.to(self.device)
+        labels = labels.to(self.device)
         
         outputs = self.net(x0set, x1set)
 
@@ -79,6 +92,11 @@ class SmashTheCodeNetTrainer():
       for i, batch_data in enumerate(data_loader, 0):
         x0set, x1set, labels = batch_data
 
+        # Convert for cuda
+        x0set = x0set.to(self.device)
+        x1set = x1set.to(self.device)
+        labels = labels.to(self.device)
+
         # zero the parameter gradients
         self.optimizer.zero_grad()
 
@@ -91,23 +109,27 @@ class SmashTheCodeNetTrainer():
 
         # print statistics
         loss += loss.item()
-        print('[%d, %5d] loss: %.3f' % (epoch + 1, i + 1, loss))
+        if i % 100 == 0:
+          print('[%d, %5d] loss: %.3f' % (epoch + 1, i + 1, loss))
       
+      # end of epoch
       val_loss, val_acc = self.valid(valid_loader)
       print('val_loss: {}, val_acc: {}'.format(val_loss, val_acc))
+      torch.save(self.net.state_dict(), 'epoch{:03d}.model'.format(epoch))
       
 
-def main(np_dataset_path):
+def main(np_dataset_path, load_model_path):
   dataset = np.load(np_dataset_path)
-  trainer = SmashTheCodeNetTrainer()
+  trainer = SmashTheCodeNetTrainer(load_model_path)
 
-  dataset = dataset[:int(640 / 0.8)]
+  # dataset = dataset[:int(640 / 0.8)]
   print('len(dataset): {}'.format(len(dataset)))
   trainer.run(10, 64, dataset)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--np_dataset_path", help="numpy save file's path", type=str, required=True)
+    parser.add_argument("--load_model_path", help="load model path", type=str, required=False, default="")
     args = parser.parse_args()
 
-    main(args.np_dataset_path)
+    main(args.np_dataset_path, args.load_model_path)
