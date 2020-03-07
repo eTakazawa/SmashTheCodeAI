@@ -2,6 +2,9 @@ import os.path
 import sys
 import re
 import argparse
+import itertools
+import random
+import pathlib
 
 import torch
 import torch.nn as nn
@@ -12,6 +15,10 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 from smash_the_code_net_pytorch import SmashTheCodeNetTorch
+
+parent_dir = str(pathlib.Path(__file__).parent.parent.resolve())
+sys.path.append(parent_dir)
+from game_const import *
 
 def transform_dataset(dataset):
   # [((x1,y1),t1), ((x2,y2), t2), ...] form to [[x1,x2,x3,...], [y1,y2,y3,...], [t1,t2,t3,...]] form
@@ -27,8 +34,28 @@ def transform_dataset(dataset):
   t = np.array(t)
   return x0, x1, t
 
-def create_tensor_dataset(dataset):
-  x0, x1, t = transform_dataset(dataset)
+# input: transform_dataset ([[x1,x2,...],[y1,y2,...],[t1,t2,...]])
+def data_augment_with_permute_channels(x0, x1, t, prob=0.5):
+  perm_nexts = range(NUM_COLORS)
+  x0_org = x0.copy()
+  x1_org = x1.copy()
+  t_org  = t.copy()
+  for perm_next in itertools.permutations(perm_nexts):
+    if random.random() < prob:
+      perm_board = list(perm_next) + [NUM_COLORS]
+      x0_perm = x0_org.copy()
+      x1_perm = x1_org.copy()
+      t_perm  =  t_org.copy()
+      # permute
+      x0_perm = x0_perm[:,perm_board,:,:] # permute swap channels
+      x1_perm = x1_perm[:,perm_next,:,:]
+
+      x0 = np.concatenate([x0, x0_perm])
+      x1 = np.concatenate([x1, x1_perm])
+      t  = np.concatenate([t, t_perm])
+  return x0, x1, t
+
+def create_tensor_dataset(x0, x1, t):
   x0 = torch.Tensor(x0)
   x1 = torch.Tensor(x1)
   t  = torch.LongTensor(t)
@@ -80,8 +107,10 @@ class SmashTheCodeNetTrainer():
   def run(self, num_epoch, batch_size, dataset, random_state=0):
     # split train/test
     train_dataset, valid_dataset = train_test_split(dataset, test_size=0.2, random_state=random_state)
-    train_dataset = create_tensor_dataset(train_dataset)
-    valid_dataset = create_tensor_dataset(valid_dataset)
+    # augment dataset
+    train_dataset = data_augment_with_permute_channels(*transform_dataset(train_dataset))
+    train_dataset = create_tensor_dataset(*train_dataset)
+    valid_dataset = create_tensor_dataset(*transform_dataset(valid_dataset))
 
     # Mini-Batch loader
     data_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
