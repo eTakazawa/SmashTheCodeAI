@@ -115,7 +115,8 @@ class SmashTheCodeNetTrainer():
       # end of epoch
       val_loss, val_acc = self.valid(valid_loader)
       print('val_loss: {}, val_acc: {}'.format(val_loss, val_acc))
-      torch.save(self.net.state_dict(), 'epoch{:03d}.model'.format(epoch))
+      if (epoch + 1) % 10 == 0:
+        torch.save(self.net.state_dict(), 'epoch{:03d}.model'.format(epoch))
       
 
 def main(np_dataset_path, load_model_path):
