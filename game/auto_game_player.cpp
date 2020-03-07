@@ -77,10 +77,10 @@ void battle(vector<string>& commands, string log_root_path) {
 
 // auto_game.out "使用AIを起動するコマンド" "対戦回数" "ログ出力保存先"
 int main(int argc, char* argv[]) {
-  if (argc < 4) {
-    cerr << "usage: auto_game.out log_root_path command0 command1 ";
+  if (argc < 5) {
+    cerr << "usage: auto_game.out log_root_path command0 command1 start_battle_cnt";
     cerr << "[num_battle<=999999]" << endl << endl;
-    cerr << "(e.g.) ./auto_game.out ../log/`date '+%Y_%m_%d-%H_%M_%S'`/ ../ai/submitted/a.out ../ai/random/a.out 1000" << endl;
+    cerr << "(e.g.) ./auto_game.out ../log/`date '+%Y_%m_%d-%H_%M_%S'`/ ../ai/submitted/a.out ../ai/random/a.out 1000 0" << endl;
     exit(1);
   }
 
@@ -90,12 +90,14 @@ int main(int argc, char* argv[]) {
   commands[0] = argv[2]; //"../ai/random/a.out";
   commands[1] = argv[3]; // "../ai/random/a.out";
   int num_battles = 100;
+  int start_battle_cnt = 0;
   if (argc >= 5) {
     num_battles = stoi(argv[4]);
+    start_battle_cnt  = stoi(argv[5]);
   }
   
   // 対戦
-  for (int battle_cnt = 0; battle_cnt < num_battles; battle_cnt++) {
+  for (int battle_cnt = start_battle_cnt; battle_cnt < num_battles; battle_cnt++) {
     string battle_cnt_str = (boost::format("%06d") % battle_cnt).str();
     string battle_path = log_root_path + battle_cnt_str + "/";
     battle(commands, battle_path);
