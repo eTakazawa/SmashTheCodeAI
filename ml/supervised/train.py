@@ -124,7 +124,7 @@ def main(np_dataset_path, load_model_path):
 
   # dataset = dataset[:int(640 / 0.8)]
   print('len(dataset): {}'.format(len(dataset)))
-  trainer.run(10, 64, dataset)
+  trainer.run(20, 100, dataset)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

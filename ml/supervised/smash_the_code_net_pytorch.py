@@ -25,12 +25,19 @@ def conv1x1(in_channels, out_channels, stride=1):
 
 class BasicBlock(nn.Module):
   #  Implementation of Basic Building Block
-  def __init__(self, in_channels, out_channels, stride=1, downsample=None):
+  def __init__(self, in_channels, out_channels, stride=1, downsample=None, use_conv2x2=False):
     super(BasicBlock, self).__init__()
-    self.conv1 = conv3x3(in_channels, out_channels, stride)
+    self.use_conv2x2 = use_conv2x2
+
+    if not use_conv2x2: self.conv1 = conv3x3(in_channels, out_channels, stride)
+    else: self.conv1 = conv2x2(in_channels, out_channels, stride)
+    
     self.bn1 = nn.BatchNorm2d(out_channels)
     self.relu = nn.ReLU(inplace=True)
-    self.conv2 = conv3x3(out_channels, out_channels)
+
+    if not use_conv2x2: self.conv2 = conv3x3(out_channels, out_channels)
+    else: self.conv2 = conv2x2(out_channels, out_channels)
+    
     self.bn2 = nn.BatchNorm2d(out_channels)
     self.downsample = downsample
 
@@ -44,12 +51,16 @@ class BasicBlock(nn.Module):
 
     if self.downsample is not None:
       identity_x = self.downsample(x)
-
+    
+    if self.use_conv2x2:
+      padding = (1, 1, 1, 1) # (left, right, top, bottom)
+      identity_x = nn.functional.pad(identity_x, padding)
+      
     out += identity_x  # shortcut connection
     return self.relu(out)
 
 class ResidualLayer(nn.Module):
-  def __init__(self, num_blocks, in_channels, out_channels, block=BasicBlock):
+  def __init__(self, num_blocks, in_channels, out_channels, block=BasicBlock, use_conv2x2=True):
     super(ResidualLayer, self).__init__()
     downsample = None
     if in_channels != out_channels:
@@ -57,8 +68,8 @@ class ResidualLayer(nn.Module):
         conv1x1(in_channels, out_channels),
         nn.BatchNorm2d(out_channels)
       )
-    self.first_block = block(in_channels, out_channels, downsample=downsample)
-    self.blocks = nn.ModuleList(block(out_channels, out_channels) for _ in range(num_blocks))
+    self.first_block = block(in_channels, out_channels, downsample=downsample, use_conv2x2=use_conv2x2)
+    self.blocks = nn.ModuleList(block(out_channels, out_channels, use_conv2x2=use_conv2x2) for _ in range(num_blocks))
 
   def forward(self, x):
     out = self.first_block(x)
@@ -77,7 +88,7 @@ class SmashTheCodeNetTorch(nn.Module):
     bd_res_channels = 256
     bd_out_channels = 2
     ## the number of ResBlock
-    bd_num_blocks = 14
+    bd_num_blocks = 7
 
     ## First layers
     self.bd_conv1 = conv3x3(bd_in_channels, bd_1st_channels)
@@ -96,13 +107,13 @@ class SmashTheCodeNetTorch(nn.Module):
     nx_res_channels = 256
     nx_out_channels = 2
     ## the number of ResBlock
-    nx_num_blocks = 7
+    nx_num_blocks = 4
     ## First layers
     self.nx_conv1 = conv2x2(nx_in_channels, nx_1st_channels)
     self.nx_bn1   = nn.BatchNorm2d(nx_1st_channels)
     self.nx_relu1 = nn.ReLU(inplace=True)
     ## ResNet
-    self.nx_reslayer = ResidualLayer(nx_num_blocks, in_channels=nx_1st_channels, out_channels=nx_res_channels)
+    self.nx_reslayer = ResidualLayer(nx_num_blocks, in_channels=nx_1st_channels, out_channels=nx_res_channels, use_conv2x2=True)
     self.nx_conv2    = conv1x1(nx_res_channels, nx_out_channels)
     self.nx_bn2      = nn.BatchNorm2d(nx_out_channels)
     self.nx_relu2    = nn.ReLU(inplace=True)
@@ -110,7 +121,7 @@ class SmashTheCodeNetTorch(nn.Module):
     # Output Layers
     out_mid_features = 256
     out_features = NUM_ACTIONS
-    self.out_fc1   = nn.Linear(in_features=198, out_features=out_mid_features)
+    self.out_fc1   = nn.Linear(in_features=1726, out_features=out_mid_features)
     self.out_relu1 = nn.ReLU(inplace=True)
     self.out_fc2   = nn.Linear(in_features=out_mid_features, out_features=out_features)
     self.out_relu2 = nn.ReLU(inplace=True)
@@ -136,7 +147,6 @@ class SmashTheCodeNetTorch(nn.Module):
     x1 = x1.view(x1.size(0), -1)
 
     out = torch.cat((x0, x1), 1)
-    # print(out)
     out = self.out_fc1(out)
     out = self.out_relu1(out)
     out = self.out_fc2(out)
