@@ -60,7 +60,7 @@ class BasicBlock(nn.Module):
     return self.relu(out)
 
 class ResidualLayer(nn.Module):
-  def __init__(self, num_blocks, in_channels, out_channels, block=BasicBlock, use_conv2x2=True):
+  def __init__(self, num_blocks, in_channels, out_channels, block=BasicBlock, use_conv2x2=False):
     super(ResidualLayer, self).__init__()
     downsample = None
     if in_channels != out_channels:
