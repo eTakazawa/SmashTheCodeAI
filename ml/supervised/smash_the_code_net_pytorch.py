@@ -88,7 +88,7 @@ class SmashTheCodeNetTorch(nn.Module):
     bd_res_channels = 256
     bd_out_channels = 2
     ## the number of ResBlock
-    bd_num_blocks = 3
+    bd_num_blocks = 18
 
     ## First layers
     self.bd_conv1 = conv3x3(bd_in_channels, bd_1st_channels)
@@ -107,21 +107,26 @@ class SmashTheCodeNetTorch(nn.Module):
     nx_res_channels = 128
     nx_out_channels = 2
     ## the number of ResBlock
-    nx_num_blocks = 1
+    nx_num_blocks_1 = 2
+    nx_num_blocks_2 = 2
     ## First layers
     self.nx_conv1 = conv2x2(nx_in_channels, nx_1st_channels)
     self.nx_bn1   = nn.BatchNorm2d(nx_1st_channels)
     self.nx_relu1 = nn.ReLU(inplace=True)
     ## ResNet
-    self.nx_reslayer = ResidualLayer(nx_num_blocks, in_channels=nx_1st_channels, out_channels=nx_res_channels, use_conv2x2=True)
-    self.nx_conv2    = conv1x1(nx_res_channels, nx_out_channels)
-    self.nx_bn2      = nn.BatchNorm2d(nx_out_channels)
-    self.nx_relu2    = nn.ReLU(inplace=True)
+    self.nx_reslayer1 = ResidualLayer(nx_num_blocks_1, in_channels=nx_1st_channels, out_channels=nx_res_channels, use_conv2x2=True)
+    self.nx_conv2     = conv1x1(nx_res_channels, nx_res_channels)
+    self.nx_bn2       = nn.BatchNorm2d(nx_res_channels)
+    self.nx_relu2     = nn.ReLU(inplace=True)
+    self.nx_reslayer2 = ResidualLayer(nx_num_blocks_2, in_channels=nx_res_channels, out_channels=nx_res_channels)
+    self.nx_conv3     = conv1x1(nx_res_channels, nx_out_channels)
+    self.nx_bn3       = nn.BatchNorm2d(nx_out_channels)
+    self.nx_relu3     = nn.ReLU(inplace=True)
     
     # Output Layers
     out_mid_features = 128
     out_features = NUM_ACTIONS
-    self.out_fc1   = nn.Linear(in_features=742, out_features=out_mid_features)
+    self.out_fc1   = nn.Linear(in_features=414, out_features=out_mid_features)
     self.out_relu1 = nn.ReLU(inplace=True)
     self.out_fc2   = nn.Linear(in_features=out_mid_features, out_features=out_features)
     self.out_relu2 = nn.ReLU(inplace=True)
@@ -140,10 +145,14 @@ class SmashTheCodeNetTorch(nn.Module):
     x1 = self.nx_conv1(x1)
     x1 = self.nx_bn1(x1)
     x1 = self.nx_relu1(x1)
-    x1 = self.nx_reslayer(x1)
+    x1 = self.nx_reslayer1(x1)
     x1 = self.nx_conv2(x1)
     x1 = self.nx_bn2(x1)
     x1 = self.nx_relu2(x1)
+    x1 = self.nx_reslayer2(x1)
+    x1 = self.nx_conv3(x1)
+    x1 = self.nx_bn3(x1)
+    x1 = self.nx_relu3(x1)
     x1 = x1.view(x1.size(0), -1)
 
     out = torch.cat((x0, x1), 1)
