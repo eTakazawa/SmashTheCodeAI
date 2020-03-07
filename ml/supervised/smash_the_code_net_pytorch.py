@@ -88,7 +88,7 @@ class SmashTheCodeNetTorch(nn.Module):
     bd_res_channels = 256
     bd_out_channels = 2
     ## the number of ResBlock
-    bd_num_blocks = 7
+    bd_num_blocks = 3
 
     ## First layers
     self.bd_conv1 = conv3x3(bd_in_channels, bd_1st_channels)
@@ -104,10 +104,10 @@ class SmashTheCodeNetTorch(nn.Module):
     ## the number of channels (Next)
     nx_in_channels  = NUM_COLORS
     nx_1st_channels = 64
-    nx_res_channels = 256
+    nx_res_channels = 128
     nx_out_channels = 2
     ## the number of ResBlock
-    nx_num_blocks = 4
+    nx_num_blocks = 1
     ## First layers
     self.nx_conv1 = conv2x2(nx_in_channels, nx_1st_channels)
     self.nx_bn1   = nn.BatchNorm2d(nx_1st_channels)
@@ -119,9 +119,9 @@ class SmashTheCodeNetTorch(nn.Module):
     self.nx_relu2    = nn.ReLU(inplace=True)
     
     # Output Layers
-    out_mid_features = 256
+    out_mid_features = 128
     out_features = NUM_ACTIONS
-    self.out_fc1   = nn.Linear(in_features=1726, out_features=out_mid_features)
+    self.out_fc1   = nn.Linear(in_features=742, out_features=out_mid_features)
     self.out_relu1 = nn.ReLU(inplace=True)
     self.out_fc2   = nn.Linear(in_features=out_mid_features, out_features=out_features)
     self.out_relu2 = nn.ReLU(inplace=True)
