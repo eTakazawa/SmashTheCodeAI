@@ -1,5 +1,5 @@
 # 概要
-深層強化学習を使ってCodingameのSmash the CodeでLegend 1位を目指す
+CodingameのSmash the Code のAIの作成（深層強化学習の実験用）
 
 # ディレクトリ構成
 - ai（過去に作ったAI）
